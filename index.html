@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenidos a Nuestro Local</title>
+  <link rel="icon" href="imagenes/logo1.png" type="image/png">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #fff8f0;
+      color: #333;
+      text-align: center;
+    }
+
+    header {
+      background-color: #ff914d;
+      padding: 20px;
+    }
+
+    header img {
+      height: 80px;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 30px;
+    }
+
+    .redes-sociales {
+      margin: 30px auto;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .redes-sociales a {
+      text-decoration: none;
+      background-color: #ff914d;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .redes-sociales a:hover {
+      background-color: #e6762f;
+    }
+
+    .ubicacion {
+      margin-bottom: 40px;
+    }
+
+    .ubicacion a {
+      font-size: 18px;
+      text-decoration: none;
+      color: #ff914d;
+      font-weight: bold;
+    }
+
+    .btn-juegos {
+      margin-top: 30px;
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .btn-juegos:hover {
+      background-color: #e6762f;
+    }
+
+    .convenios {
+      margin: 50px 0;
+    }
+
+    .convenios h2 {
+      margin-bottom: 20px;
+    }
+
+    .convenios .amigos {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+
+    .amigo {
+      background-color: #fff;
+      border: 2px solid #ff914d;
+      border-radius: 15px;
+      width: 180px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+
+    .amigo:hover {
+      transform: scale(1.05);
+    }
+
+    .amigo img {
+      width: 100px;
+      height: auto;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .amigo span {
+      display: block;
+      font-weight: bold;
+      color: #ff914d;
+    }
+
+    footer {
+      background-color: #f0f0f0;
+      padding: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    footer a {
+      color: #666;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 22px;
+      }
+
+      .btn-juegos {
+        width: 100%;
+        font-size: 18px;
+      }
+
+      .amigo {
+        width: 80%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="imagenes/logo1.png" alt="Logo del negocio">
+  </header>
+
+  <main>
+    <h1>¡Bienvenido a nuestro local!</h1>
+    <p>Disfruta de nuestros deliciosos platillos mientras te diviertes con nuestros juegos.</p>
+
+    <div class="redes-sociales">
+      <a href="https://www.facebook.com/share/17bgm3iwLA/" target="_blank">
+        📘 Facebook
+      </a>
+      <a href="https://chat.whatsapp.com/HetKwu21YCi5aFC2N4MyHc?mode=ac_c" target="_blank">
+        💬 WhatsApp
+      </a>
+    </div>
+
+    <div class="ubicacion">
+      <h2>¿Dónde estamos?</h2>
+      <a href="https://maps.app.goo.gl/bX1hDoPaVE6avwg2A" target="_blank">Ver en Google Maps</a>
+    </div>
+
+    <div class="convenios">
+      <h2>Amigos con convenio:</h2>
+      <div class="amigos">
+        <a class="amigo" href="https://www.facebook.com/share/19ZMPJXQ19/" target="_blank">
+          <img src="imagenes/lavanderia.png" alt="Lavandería JC">
+          <span>Lavandería JC</span>
+        </a>
+        <a class="amigo" href="https://www.instagram.com/dreams.beauty.mp?igsh=aGlzNDU4ZXNrNGxz" target="_blank">
+          <img src="imagenes/dreams.png" alt="DreamsBeauty.MP">
+          <span>DreamsBeauty.MP</span>
+        </a>
+      </div>
+    </div>
+
+    <button class="btn-juegos" onclick="location.href='menujuegos.html'">Ir a los juegos</button>
+  </main>
+
+  <footer>
+    <p>
+      © 2025 LaCocinaDeLaGüera. Todos los derechos reservados. <br>
+      <a href="#">Política de privacidad</a> |
+      <a href="#">Términos y condiciones</a> |
+      <a href="#">Contacto</a>
+    </p>
+  </footer>
+</body>
+</html>

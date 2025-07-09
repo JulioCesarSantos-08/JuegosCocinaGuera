@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rompecabezas Deslizante</title>
+  <link rel="icon" href="../imagenes/logo1.png" type="image/png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff8f0;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #ff914d;
+    }
+
+    #tablero {
+      width: 320px;
+      height: 320px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5px;
+    }
+
+    .tile {
+      background-color: #ff914d;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      user-select: none;
+    }
+
+    .empty {
+      background-color: transparent;
+      cursor: default;
+    }
+
+    #info {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rompecabezas Deslizante 4x4</h1>
+  <div id="tablero"></div>
+  <div id="info">Movimientos: 0 | Tiempo: 0s</div>
+<div style="margin-top: 25px;">
+  <button onclick="location.href='../menujuegos.html'" style="
+    background-color: #ff914d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  ">
+    ← Volver al menú de juegos
+  </button>
+</div>
+
+  <footer>© 2025 LaCocinaDeLaGüera — Juego 1</footer>
+
+  <script type="module">
+    import { guardarPuntuacion, obtenerTop10 } from "../js/puntuaciones.js";
+
+    const tablero = document.getElementById("tablero");
+    const info = document.getElementById("info");
+
+    let fichas = [];
+    let movimientos = 0;
+    let tiempo = 0;
+    let timer;
+
+    function iniciarCronometro() {
+      tiempo = 0;
+      clearInterval(timer);
+      timer = setInterval(() => {
+        tiempo++;
+        actualizarInfo();
+      }, 1000);
+    }
+
+    function actualizarInfo() {
+      info.textContent = `Movimientos: ${movimientos} | Tiempo: ${tiempo}s`;
+    }
+
+    function crearTablero() {
+      fichas = [...Array(15).keys()].map(x => x + 1);
+      fichas.push(null);
+      do {
+        fichas = fichas.sort(() => Math.random() - 0.5);
+      } while (!esSolucionable(fichas));
+
+      movimientos = 0;
+      renderTablero();
+      iniciarCronometro();
+    }
+
+    function renderTablero() {
+      tablero.innerHTML = "";
+      fichas.forEach((num, i) => {
+        const div = document.createElement("div");
+        div.classList.add("tile");
+        if (num === null) {
+          div.classList.add("empty");
+        } else {
+          div.textContent = num;
+          div.addEventListener("click", () => moverFicha(i));
+        }
+        tablero.appendChild(div);
+      });
+      actualizarInfo();
+    }
+
+    function moverFicha(indice) {
+      const vacio = fichas.indexOf(null);
+      const fila = Math.floor(indice / 4);
+      const col = indice % 4;
+      const filaV = Math.floor(vacio / 4);
+      const colV = vacio % 4;
+
+      const distancia = Math.abs(fila - filaV) + Math.abs(col - colV);
+      if (distancia === 1) {
+        [fichas[indice], fichas[vacio]] = [fichas[vacio], fichas[indice]];
+        movimientos++;
+        renderTablero();
+        if (estaOrdenado()) {
+          clearInterval(timer);
+          setTimeout(ganaste, 300);
+        }
+      }
+    }
+
+    function estaOrdenado() {
+      for (let i = 0; i < 15; i++) {
+        if (fichas[i] !== i + 1) return false;
+      }
+      return true;
+    }
+
+    function esSolucionable(array) {
+      let inversos = 0;
+      for (let i = 0; i < 15; i++) {
+        for (let j = i + 1; j < 16; j++) {
+          if (array[i] && array[j] && array[i] > array[j]) inversos++;
+        }
+      }
+      const filaVacio = 4 - Math.floor(array.indexOf(null) / 4);
+      return (filaVacio % 2 === 0) !== (inversos % 2 === 0);
+    }
+
+    async function ganaste() {
+      const nombre = prompt("¡Felicidades! Ingresa tu nombre:");
+      if (nombre) {
+        await guardarPuntuacion("rompecabezas", nombre, tiempo);
+        mostrarTop10();
+      }
+    }
+
+    async function mostrarTop10() {
+      const top = await obtenerTop10("rompecabezas");
+      const mensaje = top.map((p, i) => `${i + 1}. ${p.nombre} - ${p.puntos}s`).join("\n");
+      alert("🏆 TOP 10 Rompecabezas (por tiempo) 🏆\n\n" + mensaje);
+    }
+
+    crearTablero();
+  </script>
+</body>
+</html>

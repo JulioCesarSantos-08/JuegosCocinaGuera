@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menú de Juegos</title>
+  <link rel="icon" href="imagenes/logo1.png" type="image/png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #fff8f0;
+      color: #333;
+    }
+
+    header {
+      background-color: #ff914d;
+      padding: 15px;
+      text-align: center;
+    }
+
+    header img {
+      height: 60px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 26px;
+    }
+
+    .contenedor-juegos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .juego {
+      background-color: white;
+      border: 2px solid #ff914d;
+      border-radius: 15px;
+      width: 250px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+    }
+
+    .juego:hover {
+      transform: scale(1.05);
+    }
+
+    .juego img {
+      width: 100%;
+      border-radius: 10px;
+      height: 140px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .juego h3 {
+      margin: 10px 0;
+      font-size: 20px;
+      color: #ff914d;
+    }
+
+    .juego button {
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .juego button:hover {
+      background-color: #e6762f;
+    }
+
+    .volver {
+      text-align: center;
+      margin: 30px 0 10px 0;
+    }
+
+    .volver button {
+      background-color: #ff914d;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .volver button:hover {
+      background-color: #e6762f;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      padding: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .juego {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="imagenes/logo1.png" alt="Logo del negocio" />
+  </header>
+
+  <h1>Elige un juego para divertirte</h1>
+
+  <div class="contenedor-juegos">
+    <!-- Juego 1 -->
+    <div class="juego">
+      <img src="imagenes/rompecabezas.jpg" alt="Rompecabezas" />
+      <h3>Rompecabezas</h3>
+      <button onclick="location.href='juegos/juego1.html'">Jugar</button>
+    </div>
+
+    <!-- Juego 2 -->
+    <div class="juego">
+      <img src="imagenes/buscaminas.jpg" alt="Buscaminas" />
+      <h3>Buscaminas</h3>
+      <button onclick="location.href='juegos/juego2.html'">Jugar</button>
+    </div>
+  </div>
+
+  <div class="volver">
+    <button onclick="location.href='index.html'">← Volver al inicio</button>
+  </div>
+
+  <footer>
+    © 2025 LaCocinaDeLaGüera — Todos los derechos reservados.
+  </footer>
+</body>
+</html>
