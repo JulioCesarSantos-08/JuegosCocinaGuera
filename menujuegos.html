@@ -74,30 +74,38 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      transition: background-color 0.3s;
     }
 
     .juego button:hover {
       background-color: #e6762f;
     }
 
-    .volver {
+    .botones-extras {
       text-align: center;
       margin: 30px 0 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
     }
 
-    .volver button {
-      background-color: #ff914d;
+    .botones-extras button {
+      background: linear-gradient(to right, #ff914d, #ffb067);
       color: white;
-      padding: 12px 25px;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.3s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s, background 0.3s;
     }
 
-    .volver button:hover {
-      background-color: #e6762f;
+    .botones-extras button:hover {
+      background: linear-gradient(to right, #e6762f, #ffaa62);
+      transform: scale(1.05);
     }
 
     footer {
@@ -137,13 +145,12 @@
     </div>
   </div>
 
-  <div class="volver">
+  <!-- Botones adicionales -->
+  <div class="botones-extras">
+    <button onclick="location.href='ranking.html'">📊 Ver Ranking de Juegos</button>
+    <button onclick="location.href='foro.html'">💬 Ir al Foro de Opiniones</button>
     <button onclick="location.href='index.html'">← Volver al inicio</button>
   </div>
-  
-  <div class="volver">
-  <button onclick="location.href='ranking.html'">📊 Ver Ranking de Juegos</button>
-</div>
 
   <footer>
     © 2025 LaCocinaDeLaGüera — Todos los derechos reservados.
