@@ -11,40 +11,49 @@
       padding: 20px;
       background-color: #fff8f0;
     }
-
     h1 {
       text-align: center;
       color: #ff914d;
     }
-
     h2 {
       margin-top: 40px;
       color: #333;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
-
     th, td {
       padding: 10px;
       border: 1px solid #ddd;
       text-align: center;
     }
-
     th {
       background-color: #ff914d;
       color: white;
     }
-
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
-
     .seccion {
       margin-bottom: 60px;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 40px;
+    }
+    .volver button {
+      background-color: #ff914d;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .volver button:hover {
+      background-color: #e6762f;
     }
   </style>
 </head>
@@ -59,10 +68,14 @@
   </div>
 
   <div class="seccion">
-    <h2>Otro Juego (ejemplo)</h2>
-    <table id="tabla-otro">
-      <tr><th>Posición</th><th>Nombre</th><th>Casillas</th><th>Fecha</th></tr>
+    <h2>Rompecabezas Deslizante</h2>
+    <table id="tabla-rompecabezas">
+      <tr><th>Posición</th><th>Nombre</th><th>Tiempo</th><th>Movimientos</th><th>Fecha</th></tr>
     </table>
+  </div>
+
+  <div class="volver">
+    <button onclick="location.href='menujuegos.html'">← Volver al menú de juegos</button>
   </div>
 
   <script>
@@ -78,30 +91,66 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function cargarTabla(ruta, tablaId) {
-      db.ref(ruta).once("value", snapshot => {
-        const datos = [];
-        snapshot.forEach(child => {
-          datos.push(child.val());
-        });
-
-        datos.sort((a, b) => b.puntos - a.puntos); // de mayor a menor por puntos
-
-        const tabla = document.getElementById(tablaId);
-        datos.slice(0, 10).forEach((p, i) => {
-          const fila = tabla.insertRow();
-          fila.innerHTML = `<td>${i + 1}</td><td>${p.nombre}</td><td>${p.puntos}</td><td>${formatearFecha(p.fecha)}</td>`;
-        });
-      });
-    }
-
     function formatearFecha(fechaStr) {
+      if (!fechaStr) return '';
       const fecha = new Date(fechaStr);
       return fecha.toLocaleDateString("es-MX") + " " + fecha.toLocaleTimeString("es-MX");
     }
 
-    cargarTabla("ranking/buscaminas", "tabla-buscaminas");
-    cargarTabla("ranking/otro", "tabla-otro"); // cambia la ruta si tienes otro juego luego
+    // BUSCAMINAS
+    db.ref("ranking/buscaminas").once("value", snapshot => {
+      const datos = [];
+      snapshot.forEach(child => {
+        const val = child.val();
+        if (val && val.nombre && typeof val.puntos === "number") {
+          datos.push(val);
+        }
+      });
+
+      datos.sort((a, b) => b.puntos - a.puntos); // Mayor a menor
+      console.log("📊 Buscaminas:", datos);
+
+      const tabla = document.getElementById("tabla-buscaminas");
+      datos.slice(0, 10).forEach((p, i) => {
+        const fila = tabla.insertRow();
+        fila.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${p.nombre}</td>
+          <td>${p.puntos}</td>
+          <td>${formatearFecha(p.fecha)}</td>
+        `;
+      });
+    });
+
+    // ROMPECABEZAS
+    db.ref("puntajes/rompecabezas").once("value", snapshot => {
+      const datos = [];
+      snapshot.forEach(child => {
+        const val = child.val();
+        if (val && val.nombre && typeof val.tiempo === "number" && typeof val.movimientos === "number") {
+          datos.push(val);
+        }
+      });
+
+      datos.sort((a, b) => {
+        if (a.tiempo === b.tiempo) return a.movimientos - b.movimientos;
+        return a.tiempo - b.tiempo;
+      });
+
+      console.log("🧩 Rompecabezas:", datos);
+
+      const tabla = document.getElementById("tabla-rompecabezas");
+      datos.slice(0, 10).forEach((p, i) => {
+        const fila = tabla.insertRow();
+        fila.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${p.nombre}</td>
+          <td>${p.tiempo}s</td>
+          <td>${p.movimientos}</td>
+          <td>${p.fecha}</td>
+        `;
+      });
+    });
   </script>
 </body>
 </html>
