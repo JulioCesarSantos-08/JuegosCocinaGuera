@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Juego de la Serpiente</title>
   <style>
     body {
@@ -57,7 +58,7 @@
 
     @media (min-width: 600px) {
       .controls {
-        display: none; /* Oculta flechas en escritorio */
+        display: none;
       }
     }
   </style>
@@ -87,7 +88,6 @@
   </div>
 
   <script>
-    // Configurar Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
       authDomain: "pedidospuestocomida.firebaseapp.com",
@@ -99,13 +99,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Variables del juego
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const box = 20;
     let snake = [{ x: 9 * box, y: 10 * box }];
     let direction = null;
     let score = 0;
+    let interval = null;
 
     let food = {
       x: Math.floor(Math.random() * 20) * box,
@@ -113,10 +113,17 @@
     };
 
     function setDirection(dir) {
-      if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
-      else if (dir === "UP" && direction !== "DOWN") direction = "UP";
-      else if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
-      else if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+      if ((dir === "LEFT" && direction !== "RIGHT") ||
+          (dir === "RIGHT" && direction !== "LEFT") ||
+          (dir === "UP" && direction !== "DOWN") ||
+          (dir === "DOWN" && direction !== "UP")) {
+        direction = dir;
+
+        // Si aún no ha iniciado el juego, lo inicia
+        if (!interval) {
+          interval = setInterval(draw, 100);
+        }
+      }
     }
 
     document.addEventListener("keydown", e => {
@@ -158,18 +165,17 @@
       let newHead = { x: headX, y: headY };
 
       if (
-        headX < 0 || headY < 0 || headX >= canvas.width || headY >= canvas.height ||
+        headX < 0 || headY < 0 ||
+        headX >= canvas.width || headY >= canvas.height ||
         snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)
       ) {
-        clearInterval(juego);
+        clearInterval(interval);
         document.getElementById("game-over").style.display = "block";
         return;
       }
 
       snake.unshift(newHead);
     }
-
-    const juego = setInterval(draw, 100);
 
     function guardarPuntaje() {
       const nombre = document.getElementById("nombre").value.trim();
