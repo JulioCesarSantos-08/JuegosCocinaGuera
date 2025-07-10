@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rompecabezas Deslizante</title>
   <link rel="icon" href="../imagenes/logo1.png" type="image/png">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -51,6 +53,21 @@
       font-size: 18px;
     }
 
+    button {
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 25px;
+    }
+
+    button:hover {
+      background-color: #e6762f;
+    }
+
     footer {
       margin-top: 30px;
       font-size: 14px;
@@ -62,25 +79,21 @@
   <h1>Rompecabezas Deslizante 4x4</h1>
   <div id="tablero"></div>
   <div id="info">Movimientos: 0 | Tiempo: 0s</div>
-<div style="margin-top: 25px;">
-  <button onclick="location.href='../menujuegos.html'" style="
-    background-color: #ff914d;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  ">
-    ← Volver al menú de juegos
-  </button>
-</div>
-
+  <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
   <footer>© 2025 LaCocinaDeLaGüera — Juego 1</footer>
 
-  <script type="module">
-    import { guardarPuntuacion, obtenerTop10 } from "../js/puntuaciones.js";
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.firebasestorage.app",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const tablero = document.getElementById("tablero");
     const info = document.getElementById("info");
@@ -168,18 +181,22 @@
       return (filaVacio % 2 === 0) !== (inversos % 2 === 0);
     }
 
-    async function ganaste() {
+    function ganaste() {
       const nombre = prompt("¡Felicidades! Ingresa tu nombre:");
       if (nombre) {
-        await guardarPuntuacion("rompecabezas", nombre, tiempo);
-        mostrarTop10();
+        const fecha = new Date().toLocaleString("es-MX");
+        db.ref("puntajes/rompecabezas").push({
+          nombre,
+          tiempo,
+          movimientos,
+          fecha
+        }).then(() => {
+          alert("✅ Tu puntuación ha sido guardada.");
+        }).catch(err => {
+          console.error("Error al guardar:", err);
+          alert("❌ Error al guardar el puntaje.");
+        });
       }
-    }
-
-    async function mostrarTop10() {
-      const top = await obtenerTop10("rompecabezas");
-      const mensaje = top.map((p, i) => `${i + 1}. ${p.nombre} - ${p.puntos}s`).join("\n");
-      alert("🏆 TOP 10 Rompecabezas (por tiempo) 🏆\n\n" + mensaje);
     }
 
     crearTablero();

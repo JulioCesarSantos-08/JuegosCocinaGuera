@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ranking de Juegos</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #fff8f0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ff914d;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #ff914d;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .seccion {
+      margin-bottom: 60px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 Ranking de Juegos</h1>
+
+  <div class="seccion">
+    <h2>Buscaminas de La Cocina</h2>
+    <table id="tabla-buscaminas">
+      <tr><th>Posición</th><th>Nombre</th><th>Casillas</th><th>Fecha</th></tr>
+    </table>
+  </div>
+
+  <div class="seccion">
+    <h2>Otro Juego (ejemplo)</h2>
+    <table id="tabla-otro">
+      <tr><th>Posición</th><th>Nombre</th><th>Casillas</th><th>Fecha</th></tr>
+    </table>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function cargarTabla(ruta, tablaId) {
+      db.ref(ruta).once("value", snapshot => {
+        const datos = [];
+        snapshot.forEach(child => {
+          datos.push(child.val());
+        });
+
+        datos.sort((a, b) => b.puntos - a.puntos); // de mayor a menor por puntos
+
+        const tabla = document.getElementById(tablaId);
+        datos.slice(0, 10).forEach((p, i) => {
+          const fila = tabla.insertRow();
+          fila.innerHTML = `<td>${i + 1}</td><td>${p.nombre}</td><td>${p.puntos}</td><td>${formatearFecha(p.fecha)}</td>`;
+        });
+      });
+    }
+
+    function formatearFecha(fechaStr) {
+      const fecha = new Date(fechaStr);
+      return fecha.toLocaleDateString("es-MX") + " " + fecha.toLocaleTimeString("es-MX");
+    }
+
+    cargarTabla("ranking/buscaminas", "tabla-buscaminas");
+    cargarTabla("ranking/otro", "tabla-otro"); // cambia la ruta si tienes otro juego luego
+  </script>
+</body>
+</html>
