@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Juego de la Serpiente</title>
   <style>
     body {
@@ -14,13 +14,20 @@
     canvas {
       background-color: #222;
       display: block;
-      margin: 20px auto;
+      margin: 20px auto 10px;
     }
 
     input, button {
       padding: 10px;
       margin: 5px;
       font-size: 16px;
+    }
+
+    #score {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ff914d;
+      margin-top: 10px;
     }
 
     #game-over {
@@ -56,17 +63,60 @@
       background-color: #e6762f;
     }
 
+    .volver-menu {
+      margin-top: 20px;
+    }
+
+    .volver-menu button {
+      background-color: #ff914d;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .volver-menu button:hover {
+      background-color: #e6762f;
+    }
+
+    .ayuda {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .ayuda:hover {
+      background-color: #e6762f;
+    }
+
     @media (min-width: 600px) {
       .controls {
         display: none;
       }
     }
   </style>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Sonido -->
+  <audio id="comer-sound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
 </head>
 <body>
   <h1>🐍 Juego de la Serpiente</h1>
+  <div id="score">Puntos: 0</div>
   <canvas id="game" width="400" height="400"></canvas>
 
   <div class="controls">
@@ -87,7 +137,15 @@
     <button onclick="location.reload()">Jugar de nuevo</button>
   </div>
 
+  <div class="volver-menu">
+    <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
+  </div>
+
+  <!-- Botón de ayuda -->
+  <button class="ayuda" onclick="mostrarAyuda()">?</button>
+
   <script>
+    // Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
       authDomain: "pedidospuestocomida.firebaseapp.com",
@@ -99,6 +157,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Variables del juego
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const box = 20;
@@ -106,6 +165,7 @@
     let direction = null;
     let score = 0;
     let interval = null;
+    const sonidoComer = document.getElementById("comer-sound");
 
     let food = {
       x: Math.floor(Math.random() * 20) * box,
@@ -118,8 +178,6 @@
           (dir === "UP" && direction !== "DOWN") ||
           (dir === "DOWN" && direction !== "UP")) {
         direction = dir;
-
-        // Si aún no ha iniciado el juego, lo inicia
         if (!interval) {
           interval = setInterval(draw, 100);
         }
@@ -154,6 +212,8 @@
 
       if (headX === food.x && headY === food.y) {
         score += 10;
+        document.getElementById("score").textContent = `Puntos: ${score}`;
+        sonidoComer.play();
         food = {
           x: Math.floor(Math.random() * 20) * box,
           y: Math.floor(Math.random() * 20) * box
@@ -191,8 +251,19 @@
         fecha
       }).then(() => {
         alert("Puntaje guardado con éxito");
-        location.href = "ranking.html";
+        location.reload();
       });
+    }
+
+    function mostrarAyuda() {
+      alert(
+        "🟢 ¿Cómo jugar?\n\n" +
+        "1. Usa las flechas del teclado (⬅️⬆️⬇️➡️) o los botones táctiles para mover la serpiente.\n" +
+        "2. Come las manzanas rojas para ganar puntos.\n" +
+        "3. ¡No choques contra las paredes ni contigo mismo!\n" +
+        "4. Al perder, puedes escribir tu nombre y guardar tu puntaje.\n\n" +
+        "¡Disfruta el juego!"
+      );
     }
   </script>
 </body>
