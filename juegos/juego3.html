@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego de la Serpiente</title>
+  <style>
+    body {
+      background-color: #fff8f0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    canvas {
+      background-color: #222;
+      display: block;
+      margin: 20px auto;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    #game-over {
+      font-size: 24px;
+      color: #ff914d;
+      margin-top: 20px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .control-btn {
+      width: 60px;
+      height: 60px;
+      margin: 5px;
+      font-size: 24px;
+      border: none;
+      background-color: #ff914d;
+      color: white;
+      border-radius: 10px;
+    }
+
+    .control-btn:active {
+      background-color: #e6762f;
+    }
+
+    @media (min-width: 600px) {
+      .controls {
+        display: none; /* Oculta flechas en escritorio */
+      }
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>🐍 Juego de la Serpiente</h1>
+  <canvas id="game" width="400" height="400"></canvas>
+
+  <div class="controls">
+    <div class="row">
+      <button class="control-btn" onclick="setDirection('UP')">⬆️</button>
+    </div>
+    <div class="row">
+      <button class="control-btn" onclick="setDirection('LEFT')">⬅️</button>
+      <button class="control-btn" onclick="setDirection('DOWN')">⬇️</button>
+      <button class="control-btn" onclick="setDirection('RIGHT')">➡️</button>
+    </div>
+  </div>
+
+  <div id="game-over" style="display: none;">
+    <p>¡Juego Terminado!</p>
+    <input type="text" id="nombre" placeholder="Tu nombre">
+    <button onclick="guardarPuntaje()">Guardar Puntaje</button>
+    <button onclick="location.reload()">Jugar de nuevo</button>
+  </div>
+
+  <script>
+    // Configurar Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Variables del juego
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const box = 20;
+    let snake = [{ x: 9 * box, y: 10 * box }];
+    let direction = null;
+    let score = 0;
+
+    let food = {
+      x: Math.floor(Math.random() * 20) * box,
+      y: Math.floor(Math.random() * 20) * box
+    };
+
+    function setDirection(dir) {
+      if (dir === "LEFT" && direction !== "RIGHT") direction = "LEFT";
+      else if (dir === "UP" && direction !== "DOWN") direction = "UP";
+      else if (dir === "RIGHT" && direction !== "LEFT") direction = "RIGHT";
+      else if (dir === "DOWN" && direction !== "UP") direction = "DOWN";
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft") setDirection("LEFT");
+      else if (e.key === "ArrowUp") setDirection("UP");
+      else if (e.key === "ArrowRight") setDirection("RIGHT");
+      else if (e.key === "ArrowDown") setDirection("DOWN");
+    });
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#ff914d" : "green";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      let headX = snake[0].x;
+      let headY = snake[0].y;
+
+      if (direction === "LEFT") headX -= box;
+      if (direction === "UP") headY -= box;
+      if (direction === "RIGHT") headX += box;
+      if (direction === "DOWN") headY += box;
+
+      if (headX === food.x && headY === food.y) {
+        score += 10;
+        food = {
+          x: Math.floor(Math.random() * 20) * box,
+          y: Math.floor(Math.random() * 20) * box
+        };
+      } else {
+        snake.pop();
+      }
+
+      let newHead = { x: headX, y: headY };
+
+      if (
+        headX < 0 || headY < 0 || headX >= canvas.width || headY >= canvas.height ||
+        snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)
+      ) {
+        clearInterval(juego);
+        document.getElementById("game-over").style.display = "block";
+        return;
+      }
+
+      snake.unshift(newHead);
+    }
+
+    const juego = setInterval(draw, 100);
+
+    function guardarPuntaje() {
+      const nombre = document.getElementById("nombre").value.trim();
+      if (!nombre) {
+        alert("Por favor escribe tu nombre.");
+        return;
+      }
+
+      const fecha = new Date().toLocaleString("es-MX");
+      db.ref("puntajes/serpiente").push({
+        nombre,
+        puntos: score,
+        fecha
+      }).then(() => {
+        alert("Puntaje guardado con éxito");
+        location.href = "ranking.html";
+      });
+    }
+  </script>
+</body>
+</html>
