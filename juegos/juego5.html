@@ -18,6 +18,7 @@
       display: block;
       margin: 20px auto;
       border: 2px solid #ff914d;
+      touch-action: none;
     }
     #score {
       font-size: 20px;
@@ -61,6 +62,20 @@
       color: white;
       cursor: pointer;
     }
+    .joystick {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .joystick button {
+      padding: 15px 25px;
+      font-size: 20px;
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      border-radius: 50%;
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -69,6 +84,11 @@
   <h1>🎮 Arkanoid</h1>
   <div id="score">Puntos: <span id="puntos">0</span> | Nivel: <span id="nivel">1</span></div>
   <canvas id="canvas" width="480" height="320"></canvas>
+
+  <div class="joystick">
+    <button ontouchstart="leftPressed = true" ontouchend="leftPressed = false">⟵</button>
+    <button ontouchstart="rightPressed = true" ontouchend="rightPressed = false">⟶</button>
+  </div>
 
   <div class="botones">
     <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
@@ -83,7 +103,6 @@
   <button id="ayuda" onclick="mostrarAyuda()">?</button>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
       authDomain: "pedidospuestocomida.firebaseapp.com",
@@ -121,7 +140,6 @@
 
     let puntos = 0;
     let nivel = 1;
-
     let juegoActivo = true;
 
     const bricks = [];
@@ -140,53 +158,32 @@
     document.addEventListener("keyup", keyUpHandler);
 
     function keyDownHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = true;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = true;
-      }
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
     }
 
     function keyUpHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = false;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = false;
-      }
+      if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+      else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
     }
 
     function collisionDetection() {
       for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
           const b = bricks[c][r];
-          if (b.visible) {
-            if (
-              ballX > b.x &&
-              ballX < b.x + brickWidth &&
-              ballY > b.y &&
-              ballY < b.y + brickHeight
-            ) {
-              dy = -dy;
-              b.visible = false;
-              puntos += 10;
-              puntosSpan.textContent = puntos;
-
-              if (verificarFinNivel()) {
-                subirNivel();
-              }
-            }
+          if (b.visible && ballX > b.x && ballX < b.x + brickWidth && ballY > b.y && ballY < b.y + brickHeight) {
+            dy = -dy;
+            b.visible = false;
+            puntos += 10;
+            puntosSpan.textContent = puntos;
+            if (verificarFinNivel()) subirNivel();
           }
         }
       }
     }
 
     function verificarFinNivel() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          if (bricks[c][r].visible) return false;
-        }
-      }
-      return true;
+      return bricks.every(col => col.every(b => !b.visible));
     }
 
     function subirNivel() {
@@ -237,32 +234,24 @@
 
     function draw() {
       if (!juegoActivo) return;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBricks();
       drawBall();
       drawPaddle();
       collisionDetection();
 
-      if (ballX + dx > canvas.width - 10 || ballX + dx < 10) {
-        dx = -dx;
-      }
-      if (ballY + dy < 10) {
-        dy = -dy;
-      } else if (ballY + dy > canvas.height - 10) {
-        if (ballX > paddleX && ballX < paddleX + paddleWidth) {
-          dy = -dy;
-        } else {
+      if (ballX + dx > canvas.width - 10 || ballX + dx < 10) dx = -dx;
+      if (ballY + dy < 10) dy = -dy;
+      else if (ballY + dy > canvas.height - 10) {
+        if (ballX > paddleX && ballX < paddleX + paddleWidth) dy = -dy;
+        else {
           juegoActivo = false;
           document.getElementById("registro").style.display = "block";
         }
       }
 
-      if (rightPressed && paddleX < canvas.width - paddleWidth) {
-        paddleX += 7;
-      } else if (leftPressed && paddleX > 0) {
-        paddleX -= 7;
-      }
+      if (rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 7;
+      else if (leftPressed && paddleX > 0) paddleX -= 7;
 
       ballX += dx;
       ballY += dy;
@@ -280,19 +269,14 @@
       const nombre = document.getElementById("nombre").value.trim();
       if (!nombre) return alert("Escribe tu nombre");
       const fecha = new Date().toLocaleString("es-MX");
-
-      db.ref("puntajes/arkanoid").push({
-        nombre,
-        puntos,
-        fecha
-      }).then(() => {
+      db.ref("puntajes/arkanoid").push({ nombre, puntos, fecha }).then(() => {
         alert("¡Puntaje guardado!");
         location.reload();
       });
     }
 
     function mostrarAyuda() {
-      alert("🎮 Arkanoid:\n\n- Mueve la paleta con ← →\n- Rebota la bola y destruye los bloques\n- Cada nivel la velocidad sube\n- Acumula puntos y guarda tu nombre al perder\n¡Buena suerte!");
+      alert("🎮 Arkanoid:\n\n- Mueve la paleta con ← → o los botones del móvil\n- Rebota la bola y destruye los bloques\n- Cada nivel la velocidad sube\n- Acumula puntos y guarda tu nombre al perder\n¡Buena suerte!");
     }
   </script>
 </body>
