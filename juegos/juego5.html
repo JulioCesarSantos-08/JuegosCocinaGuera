@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arkanoid</title>
+  <style>
+    body {
+      background-color: #fff8f0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h1 {
+      color: #ff914d;
+    }
+    canvas {
+      background-color: #222;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #ff914d;
+    }
+    #score {
+      font-size: 20px;
+      color: #333;
+    }
+    .botones {
+      margin-top: 15px;
+    }
+    .botones button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #ff914d;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .botones button:hover {
+      background-color: #e6762f;
+    }
+    #registro {
+      margin-top: 20px;
+      display: none;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    #ayuda {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #ff914d;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>🎮 Arkanoid</h1>
+  <div id="score">Puntos: <span id="puntos">0</span> | Nivel: <span id="nivel">1</span></div>
+  <canvas id="canvas" width="480" height="320"></canvas>
+
+  <div class="botones">
+    <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
+    <button onclick="reiniciar()">Jugar de nuevo</button>
+  </div>
+
+  <div id="registro">
+    <input type="text" id="nombre" placeholder="Tu nombre" />
+    <button onclick="guardarPuntaje()">Guardar Puntaje</button>
+  </div>
+
+  <button id="ayuda" onclick="mostrarAyuda()">?</button>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const puntosSpan = document.getElementById("puntos");
+    const nivelSpan = document.getElementById("nivel");
+
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height - 30;
+    let dx = 2;
+    let dy = -2;
+    let velocidad = 2;
+    let paddleHeight = 10;
+    let paddleWidth = 75;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let rightPressed = false;
+    let leftPressed = false;
+
+    let brickRowCount = 3;
+    let brickColumnCount = 5;
+    let brickWidth = 75;
+    let brickHeight = 20;
+    let brickPadding = 10;
+    let brickOffsetTop = 30;
+    let brickOffsetLeft = 30;
+
+    let puntos = 0;
+    let nivel = 1;
+
+    let juegoActivo = true;
+
+    const bricks = [];
+
+    function crearBricks() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+          bricks[c][r] = { x: 0, y: 0, visible: true };
+        }
+      }
+    }
+    crearBricks();
+
+    document.addEventListener("keydown", keyDownHandler);
+    document.addEventListener("keyup", keyUpHandler);
+
+    function keyDownHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") {
+        rightPressed = true;
+      } else if (e.key === "Left" || e.key === "ArrowLeft") {
+        leftPressed = true;
+      }
+    }
+
+    function keyUpHandler(e) {
+      if (e.key === "Right" || e.key === "ArrowRight") {
+        rightPressed = false;
+      } else if (e.key === "Left" || e.key === "ArrowLeft") {
+        leftPressed = false;
+      }
+    }
+
+    function collisionDetection() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          const b = bricks[c][r];
+          if (b.visible) {
+            if (
+              ballX > b.x &&
+              ballX < b.x + brickWidth &&
+              ballY > b.y &&
+              ballY < b.y + brickHeight
+            ) {
+              dy = -dy;
+              b.visible = false;
+              puntos += 10;
+              puntosSpan.textContent = puntos;
+
+              if (verificarFinNivel()) {
+                subirNivel();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function verificarFinNivel() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].visible) return false;
+        }
+      }
+      return true;
+    }
+
+    function subirNivel() {
+      nivel++;
+      velocidad += 0.1;
+      dx = velocidad;
+      dy = -velocidad;
+      nivelSpan.textContent = nivel;
+      crearBricks();
+      ballX = canvas.width / 2;
+      ballY = canvas.height - 30;
+      paddleX = (canvas.width - paddleWidth) / 2;
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "#ff914d";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawPaddle() {
+      ctx.beginPath();
+      ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+      ctx.fillStyle = "#0095DD";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawBricks() {
+      for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+          if (bricks[c][r].visible) {
+            const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+            const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+            bricks[c][r].x = brickX;
+            bricks[c][r].y = brickY;
+            ctx.beginPath();
+            ctx.rect(brickX, brickY, brickWidth, brickHeight);
+            ctx.fillStyle = "#e6762f";
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+      }
+    }
+
+    function draw() {
+      if (!juegoActivo) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBricks();
+      drawBall();
+      drawPaddle();
+      collisionDetection();
+
+      if (ballX + dx > canvas.width - 10 || ballX + dx < 10) {
+        dx = -dx;
+      }
+      if (ballY + dy < 10) {
+        dy = -dy;
+      } else if (ballY + dy > canvas.height - 10) {
+        if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+          dy = -dy;
+        } else {
+          juegoActivo = false;
+          document.getElementById("registro").style.display = "block";
+        }
+      }
+
+      if (rightPressed && paddleX < canvas.width - paddleWidth) {
+        paddleX += 7;
+      } else if (leftPressed && paddleX > 0) {
+        paddleX -= 7;
+      }
+
+      ballX += dx;
+      ballY += dy;
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    function reiniciar() {
+      location.reload();
+    }
+
+    function guardarPuntaje() {
+      const nombre = document.getElementById("nombre").value.trim();
+      if (!nombre) return alert("Escribe tu nombre");
+      const fecha = new Date().toLocaleString("es-MX");
+
+      db.ref("puntajes/arkanoid").push({
+        nombre,
+        puntos,
+        fecha
+      }).then(() => {
+        alert("¡Puntaje guardado!");
+        location.reload();
+      });
+    }
+
+    function mostrarAyuda() {
+      alert("🎮 Arkanoid:\n\n- Mueve la paleta con ← →\n- Rebota la bola y destruye los bloques\n- Cada nivel la velocidad sube\n- Acumula puntos y guarda tu nombre al perder\n¡Buena suerte!");
+    }
+  </script>
+</body>
+</html>

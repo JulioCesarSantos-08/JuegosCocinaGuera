@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Juego del Gato</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff8f0;
+      text-align: center;
+      position: relative;
+    }
+
+    h1 {
+      color: #ff914d;
+    }
+
+    #marcador {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 10px;
+      color: #444;
+    }
+
+    .tablero {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .celda {
+      background-color: white;
+      border: 2px solid #ff914d;
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .celda:hover {
+      background-color: #ffe0cc;
+    }
+
+    #resultado {
+      font-size: 20px;
+      margin: 10px;
+      color: #e6762f;
+    }
+
+    .acciones {
+      margin-top: 15px;
+    }
+
+    .acciones button {
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .acciones button:hover {
+      background-color: #e6762f;
+    }
+
+    #registro {
+      display: none;
+      margin-top: 20px;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    /* Botón flotante de ayuda */
+    #btn-ayuda {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #ff914d;
+      color: white;
+      font-size: 24px;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #btn-ayuda:hover {
+      background-color: #e6762f;
+    }
+
+    #modal-ayuda {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .contenido-ayuda {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 10px;
+      color: #333;
+      text-align: center;
+    }
+
+    .contenido-ayuda h2 {
+      color: #ff914d;
+    }
+
+    .contenido-ayuda ul {
+      text-align: left;
+      padding-left: 20px;
+    }
+
+    .contenido-ayuda button {
+      margin-top: 15px;
+      background-color: #ff914d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .contenido-ayuda button:hover {
+      background-color: #e6762f;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>🎮 Juego del Gato</h1>
+  <div id="marcador">Puntos acumulados: <span id="puntos">0</span></div>
+
+  <div class="tablero" id="tablero"></div>
+
+  <div id="resultado"></div>
+
+  <div class="acciones">
+    <button onclick="reiniciar()">Jugar otra vez</button>
+    <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
+  </div>
+
+  <div id="registro">
+    <input type="text" id="nombre" placeholder="Tu nombre" />
+    <button onclick="guardarPuntaje()">Guardar Puntaje</button>
+  </div>
+
+  <!-- Botón de ayuda -->
+  <button id="btn-ayuda" onclick="mostrarAyuda()">❓</button>
+
+  <!-- Modal de ayuda -->
+  <div id="modal-ayuda">
+    <div class="contenido-ayuda">
+      <h2>¿Cómo jugar?</h2>
+      <p>Este es el clásico juego del Gato (Tic-Tac-Toe).</p>
+      <ul>
+        <li>Juegas con <strong>X</strong>, el bot juega con <strong>O</strong>.</li>
+        <li>Tu objetivo es alinear 3 símbolos en fila, columna o diagonal.</li>
+        <li>Ganar: <strong>+10 puntos</strong></li>
+        <li>Empatar: <strong>+5 puntos</strong></li>
+        <li>Perder: <strong>0 puntos</strong></li>
+        <li>Juega cuantas veces quieras. Guarda tu nombre al final.</li>
+      </ul>
+      <button onclick="cerrarAyuda()">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let tablero = Array(9).fill("");
+    let puntos = 0;
+    let juegoTerminado = false;
+    const tableroDiv = document.getElementById("tablero");
+    const resultado = document.getElementById("resultado");
+    const puntosSpan = document.getElementById("puntos");
+
+    function renderizarTablero() {
+      tableroDiv.innerHTML = "";
+      tablero.forEach((valor, i) => {
+        const celda = document.createElement("div");
+        celda.className = "celda";
+        celda.textContent = valor;
+        celda.onclick = () => jugar(i);
+        tableroDiv.appendChild(celda);
+      });
+    }
+
+    function jugar(i) {
+      if (tablero[i] || juegoTerminado) return;
+      tablero[i] = "X";
+      renderizarTablero();
+      if (verificar("X")) return terminar("¡Ganaste!", 10);
+      if (tablero.every(c => c)) return terminar("Empate", 5);
+      turnoBot();
+    }
+
+    function turnoBot() {
+      const vacías = tablero.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+      // A: Bot gana si puede
+      for (let i of vacías) {
+        const copia = [...tablero];
+        copia[i] = "O";
+        if (verificarTablero("O", copia)) {
+          tablero[i] = "O";
+          renderizarTablero();
+          return verificar("O") ? terminar("Perdiste", 0) : null;
+        }
+      }
+
+      // B: Bot bloquea si tú vas a ganar
+      for (let i of vacías) {
+        const copia = [...tablero];
+        copia[i] = "X";
+        if (verificarTablero("X", copia)) {
+          tablero[i] = "O";
+          renderizarTablero();
+          return tablero.every(c => c) ? terminar("Empate", 5) : null;
+        }
+      }
+
+      // C: Movimiento aleatorio
+      const eleccion = vacías[Math.floor(Math.random() * vacías.length)];
+      tablero[eleccion] = "O";
+      renderizarTablero();
+      if (verificar("O")) return terminar("Perdiste", 0);
+      if (tablero.every(c => c)) return terminar("Empate", 5);
+    }
+
+    function verificar(jugador) {
+      return verificarTablero(jugador, tablero);
+    }
+
+    function verificarTablero(jugador, estado) {
+      const c = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return c.some(comb => comb.every(i => estado[i] === jugador));
+    }
+
+    function terminar(mensaje, pts) {
+      juegoTerminado = true;
+      puntos += pts;
+      puntosSpan.textContent = puntos;
+      resultado.textContent = `${mensaje} (+${pts} pts)`;
+      document.getElementById("registro").style.display = "block";
+    }
+
+    function reiniciar() {
+      tablero = Array(9).fill("");
+      juegoTerminado = false;
+      resultado.textContent = "";
+      document.getElementById("registro").style.display = "none";
+      renderizarTablero();
+    }
+
+    function guardarPuntaje() {
+      const nombre = document.getElementById("nombre").value.trim();
+      if (!nombre) return alert("Ingresa tu nombre");
+      const fecha = new Date().toLocaleString("es-MX");
+
+      db.ref("puntajes/gato").push({
+        nombre,
+        puntos,
+        fecha
+      }).then(() => {
+        alert("¡Puntaje guardado con éxito!");
+        location.reload();
+      });
+    }
+
+    // Modal ayuda
+    function mostrarAyuda() {
+      document.getElementById("modal-ayuda").style.display = "block";
+    }
+    function cerrarAyuda() {
+      document.getElementById("modal-ayuda").style.display = "none";
+    }
+
+    // Inicia
+    renderizarTablero();
+  </script>
+</body>
+</html>
