@@ -3,8 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <title>Ranking de Juegos</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const juegos = [
+      { id: "ranking/buscaminas", nombre: "Buscaminas de La Cocina", columnas: ["Nombre", "Casillas", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
+      { id: "puntajes/rompecabezas", nombre: "Rompecabezas Deslizante", columnas: ["Nombre", "Tiempo", "Movimientos", "Fecha"], orden: (a, b) => a.tiempo - b.tiempo || a.movimientos - b.movimientos },
+      { id: "puntajes/serpiente", nombre: "Serpiente Come Manzanas", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
+      { id: "puntajes/gato", nombre: "Gato (Tres en Raya)", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
+      { id: "puntajes/arkanoid", nombre: "Arkanoid", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
+      { id: "ranking/juego6", nombre: "Simón Dice", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntaje - a.puntaje } // "puntaje" en lugar de "puntos"
+    ];
+
+    const contenedor = document.getElementById("tablas");
+
+    function formatearFecha(f) {
+      if (!f) return "";
+      const date = new Date(f);
+      return isNaN(date) ? f : date.toLocaleDateString("es-MX") + " " + date.toLocaleTimeString("es-MX");
+    }
+
+    juegos.forEach(({ id, nombre, columnas, orden }) => {
+      const refJuego = ref(db, id);
+      onValue(refJuego, (snap) => {
+        const data = snap.val();
+        if (!data) return;
+
+        const lista = Object.values(data);
+        lista.sort(orden);
+
+        const seccion = document.createElement("div");
+        seccion.className = "seccion";
+
+        const titulo = document.createElement("h2");
+        titulo.textContent = nombre;
+
+        const tabla = document.createElement("table");
+        const thead = document.createElement("thead");
+        const filaHead = document.createElement("tr");
+        filaHead.innerHTML = `<th>Posición</th>` + columnas.map(col => `<th>${col}</th>`).join("");
+        thead.appendChild(filaHead);
+        tabla.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        lista.slice(0, 10).forEach((j, i) => {
+          const fila = document.createElement("tr");
+          fila.innerHTML = `<td>${i + 1}</td>` + columnas.map(col => {
+            if (col === "Nombre") return `<td>${j.nombre || "Anónimo"}</td>`;
+            if (col === "Casillas") return `<td>${j.puntos || 0}</td>`;
+            if (col === "Puntos") return `<td>${j.puntos || j.puntaje || 0}</td>`;
+            if (col === "Tiempo") return `<td>${j.tiempo}s</td>`;
+            if (col === "Movimientos") return `<td>${j.movimientos}</td>`;
+            if (col === "Fecha") return `<td>${formatearFecha(j.fecha)}</td>`;
+            return `<td>N/A</td>`;
+          }).join("");
+          tbody.appendChild(fila);
+        });
+
+        tabla.appendChild(tbody);
+        seccion.appendChild(titulo);
+        seccion.appendChild(tabla);
+        contenedor.appendChild(seccion);
+      });
+    });
+  </script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -58,180 +133,13 @@
   </style>
 </head>
 <body>
-  <h1>🏆 Ranking de Juegos</h1>
-  <h1>Cada fin de mes, el top1 en la mayotia de las tablas ganara un platillo gratis en unica compra!</h1>
+  <h1>🏆 Ranking de Juegos.</h1>
+  <h1>Cada fin de mes, el top1 en la mayoria de las tablas ganara un platillo gratis, en unica compra!</h1>
 
-  <div class="seccion">
-    <h2>Buscaminas de La Cocina</h2>
-    <table id="tabla-buscaminas">
-      <tr><th>Posición</th><th>Nombre</th><th>Casillas</th><th>Fecha</th></tr>
-    </table>
-  </div>
-
-  <div class="seccion">
-    <h2>Rompecabezas Deslizante</h2>
-    <table id="tabla-rompecabezas">
-      <tr><th>Posición</th><th>Nombre</th><th>Tiempo</th><th>Movimientos</th><th>Fecha</th></tr>
-    </table>
-  </div>
-
-  <div class="seccion">
-    <h2>Serpiente Come Manzanas</h2>
-    <table id="tabla-serpiente">
-      <tr><th>Posición</th><th>Nombre</th><th>Puntos</th><th>Fecha</th></tr>
-    </table>
-  </div>
-
-  <div class="seccion">
-    <h2>Gato (Tres en Raya)</h2>
-    <table id="tabla-gato">
-      <tr><th>Posición</th><th>Nombre</th><th>Puntos</th><th>Fecha</th></tr>
-    </table>
-  </div>
-
-  <div class="seccion">
-    <h2>Arkanoid</h2>
-    <table id="tabla-arkanoid">
-      <tr><th>Posición</th><th>Nombre</th><th>Puntos</th><th>Fecha</th></tr>
-    </table>
-  </div>
+  <div id="tablas"></div>
 
   <div class="volver">
     <button onclick="location.href='menujuegos.html'">← Volver al menú de juegos</button>
   </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
-      authDomain: "pedidospuestocomida.firebaseapp.com",
-      projectId: "pedidospuestocomida",
-      storageBucket: "pedidospuestocomida.appspot.com",
-      messagingSenderId: "251357525868",
-      appId: "1:251357525868:web:9cf755590e16fdff686549"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function formatearFecha(fechaStr) {
-      if (!fechaStr) return '';
-      const fecha = new Date(fechaStr);
-      return fecha.toLocaleDateString("es-MX") + " " + fecha.toLocaleTimeString("es-MX");
-    }
-
-    // BUSCAMINAS
-    db.ref("ranking/buscaminas").once("value", snapshot => {
-      const datos = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.nombre && typeof val.puntos === "number") {
-          datos.push(val);
-        }
-      });
-      datos.sort((a, b) => b.puntos - a.puntos);
-      const tabla = document.getElementById("tabla-buscaminas");
-      datos.slice(0, 10).forEach((p, i) => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${p.nombre}</td>
-          <td>${p.puntos}</td>
-          <td>${formatearFecha(p.fecha)}</td>
-        `;
-      });
-    });
-
-    // ROMPECABEZAS
-    db.ref("puntajes/rompecabezas").once("value", snapshot => {
-      const datos = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.nombre && typeof val.tiempo === "number" && typeof val.movimientos === "number") {
-          datos.push(val);
-        }
-      });
-      datos.sort((a, b) => {
-        if (a.tiempo === b.tiempo) return a.movimientos - b.movimientos;
-        return a.tiempo - b.tiempo;
-      });
-      const tabla = document.getElementById("tabla-rompecabezas");
-      datos.slice(0, 10).forEach((p, i) => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${p.nombre}</td>
-          <td>${p.tiempo}s</td>
-          <td>${p.movimientos}</td>
-          <td>${p.fecha}</td>
-        `;
-      });
-    });
-
-    // SERPIENTE
-    db.ref("puntajes/serpiente").once("value", snapshot => {
-      const datos = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.nombre && typeof val.puntos === "number") {
-          datos.push(val);
-        }
-      });
-      datos.sort((a, b) => b.puntos - a.puntos);
-      const tabla = document.getElementById("tabla-serpiente");
-      datos.slice(0, 10).forEach((p, i) => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${p.nombre}</td>
-          <td>${p.puntos}</td>
-          <td>${formatearFecha(p.fecha)}</td>
-        `;
-      });
-    });
-
-    // GATO
-    db.ref("puntajes/gato").once("value", snapshot => {
-      const datos = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.nombre && typeof val.puntos === "number") {
-          datos.push(val);
-        }
-      });
-      datos.sort((a, b) => b.puntos - a.puntos);
-      const tabla = document.getElementById("tabla-gato");
-      datos.slice(0, 10).forEach((p, i) => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${p.nombre}</td>
-          <td>${p.puntos}</td>
-          <td>${formatearFecha(p.fecha)}</td>
-        `;
-      });
-    });
-
-    // ARKANOID
-    db.ref("puntajes/arkanoid").once("value", snapshot => {
-      const datos = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.nombre && typeof val.puntos === "number") {
-          datos.push(val);
-        }
-      });
-      datos.sort((a, b) => b.puntos - a.puntos);
-      const tabla = document.getElementById("tabla-arkanoid");
-      datos.slice(0, 10).forEach((p, i) => {
-        const fila = tabla.insertRow();
-        fila.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${p.nombre}</td>
-          <td>${p.puntos}</td>
-          <td>${formatearFecha(p.fecha)}</td>
-        `;
-      });
-    });
-  </script>
 </body>
 </html>
