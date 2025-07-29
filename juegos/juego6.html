@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simón Dice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #1e1e2f;
+      color: white;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #tablero {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      grid-gap: 15px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .cuadro {
+      width: 80px;
+      height: 80px;
+      background-color: #444;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .resaltado {
+      background-color: yellow !important;
+      transform: scale(1.1);
+    }
+
+    #puntaje, #nivel {
+      font-size: 18px;
+      margin: 10px;
+    }
+
+    #nombreInput {
+      padding: 8px;
+      border-radius: 5px;
+      margin: 10px;
+      width: 200px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      margin: 10px;
+      border-radius: 5px;
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    #ayuda {
+      background: #007bff;
+    }
+
+    #ayuda:hover {
+      background: #0056b3;
+    }
+
+    #menu {
+      background: #6c757d;
+    }
+
+    #menu:hover {
+      background: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Simón Dice</h1>
+  <div id="puntaje">Puntaje: 0</div>
+  <div id="nivel">Nivel: 1</div>
+  <input type="text" id="nombreInput" placeholder="Ingresa tu nombre">
+  <button onclick="iniciarJuego()">Iniciar Juego</button>
+  <button id="ayuda" onclick="mostrarAyuda()">¿?</button>
+  <button onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
+
+  <div id="tablero"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    // Importar Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const dbRef = ref(database, "ranking/juego6");
+
+    const tablero = document.getElementById("tablero");
+    const puntajeEl = document.getElementById("puntaje");
+    const nivelEl = document.getElementById("nivel");
+    const nombreInput = document.getElementById("nombreInput");
+
+    let secuencia = [];
+    let secuenciaUsuario = [];
+    let nivel = 1;
+    let puntaje = 0;
+    let jugando = false;
+    const totalCuadros = 16;
+
+    // Crear los botones
+    for (let i = 0; i < totalCuadros; i++) {
+      const cuadro = document.createElement("div");
+      cuadro.classList.add("cuadro");
+      cuadro.dataset.index = i;
+      cuadro.addEventListener("click", () => manejarClickUsuario(i));
+      tablero.appendChild(cuadro);
+    }
+
+    function iniciarJuego() {
+      if (!nombreInput.value.trim()) {
+        alert("Por favor, ingresa tu nombre antes de comenzar.");
+        return;
+      }
+      secuencia = [];
+      nivel = 1;
+      puntaje = 0;
+      actualizarPuntaje();
+      siguienteNivel();
+    }
+
+    function actualizarPuntaje() {
+      puntajeEl.textContent = `Puntaje: ${puntaje}`;
+      nivelEl.textContent = `Nivel: ${nivel}`;
+    }
+
+    function siguienteNivel() {
+      jugando = false;
+      secuenciaUsuario = [];
+      secuencia.push(Math.floor(Math.random() * totalCuadros));
+      mostrarSecuencia();
+    }
+
+    function mostrarSecuencia() {
+      let i = 0;
+      const velocidad = Math.max(500 - (nivel * 20), 100);
+      const interval = setInterval(() => {
+        const idx = secuencia[i];
+        const cuadro = tablero.children[idx];
+        cuadro.classList.add("resaltado");
+        setTimeout(() => cuadro.classList.remove("resaltado"), velocidad * 0.6);
+        i++;
+        if (i >= secuencia.length) {
+          clearInterval(interval);
+          jugando = true;
+        }
+      }, velocidad);
+    }
+
+    function manejarClickUsuario(indice) {
+      if (!jugando) return;
+      secuenciaUsuario.push(indice);
+      const cuadro = tablero.children[indice];
+      cuadro.classList.add("resaltado");
+      setTimeout(() => cuadro.classList.remove("resaltado"), 200);
+
+      const posicion = secuenciaUsuario.length - 1;
+      if (secuenciaUsuario[posicion] !== secuencia[posicion]) {
+        alert("¡Perdiste! Tu puntuación final fue: " + puntaje);
+        guardarPuntaje();
+        return;
+      }
+
+      if (secuenciaUsuario.length === secuencia.length) {
+        puntaje += 10;
+        nivel++;
+        actualizarPuntaje();
+        setTimeout(siguienteNivel, 1000);
+      }
+    }
+
+    function guardarPuntaje() {
+      const nombre = nombreInput.value.trim();
+      if (!nombre) return;
+
+      push(dbRef, {
+        nombre: nombre,
+        puntaje: puntaje,
+        fecha: new Date().toLocaleString()
+      });
+
+      // Reiniciar
+      secuencia = [];
+      secuenciaUsuario = [];
+      nivel = 1;
+      puntaje = 0;
+      actualizarPuntaje();
+      jugando = false;
+    }
+
+    window.iniciarJuego = iniciarJuego; // IMPORTANTE para que sea visible desde el HTML
+
+    window.mostrarAyuda = function () {
+      alert("🧠 Simón Dice:\n\nRecuerda la secuencia de luces y repítela haciendo clic en los botones. Cada nivel se vuelve más difícil. Ganar un nivel = +10 puntos. Si fallas, reinicias desde el principio. ¡Suerte!");
+    };
+  </script>
+</body>
+</html>
