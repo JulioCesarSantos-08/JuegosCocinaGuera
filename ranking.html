@@ -25,7 +25,8 @@
       { id: "puntajes/serpiente", nombre: "Serpiente Come Manzanas", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
       { id: "puntajes/gato", nombre: "Gato (Tres en Raya)", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
       { id: "puntajes/arkanoid", nombre: "Arkanoid", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntos - a.puntos },
-      { id: "ranking/juego6", nombre: "Simón Dice", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntaje - a.puntaje } // "puntaje" en lugar de "puntos"
+      { id: "ranking/juego6", nombre: "Simón Dice", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntaje - a.puntaje },
+      { id: "ranking/juego7", nombre: "Sopa de Letras", columnas: ["Nombre", "Puntos", "Fecha"], orden: (a, b) => b.puntuacion - a.puntuacion }
     ];
 
     const contenedor = document.getElementById("tablas");
@@ -64,7 +65,7 @@
           fila.innerHTML = `<td>${i + 1}</td>` + columnas.map(col => {
             if (col === "Nombre") return `<td>${j.nombre || "Anónimo"}</td>`;
             if (col === "Casillas") return `<td>${j.puntos || 0}</td>`;
-            if (col === "Puntos") return `<td>${j.puntos || j.puntaje || 0}</td>`;
+            if (col === "Puntos") return `<td>${j.puntos || j.puntaje || j.puntuacion || 0}</td>`;
             if (col === "Tiempo") return `<td>${j.tiempo}s</td>`;
             if (col === "Movimientos") return `<td>${j.movimientos}</td>`;
             if (col === "Fecha") return `<td>${formatearFecha(j.fecha)}</td>`;
@@ -134,7 +135,7 @@
 </head>
 <body>
   <h1>🏆 Ranking de Juegos.</h1>
-  <h1>Cada fin de mes, el top1 en la mayoria de las tablas ganara un platillo gratis, en unica compra!</h1>
+  <h1>Cada fin de mes, el top1 en la mayoría de las tablas ganará un platillo gratis en una única compra.</h1>
 
   <div id="tablas"></div>
 
