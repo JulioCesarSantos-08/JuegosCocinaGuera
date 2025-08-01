@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sopa de Letras</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      text-align: center;
+      background-color: #fff5e1;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { color: #d35400; font-size: 2em; }
+    #nivel, #timer { font-weight: bold; margin: 10px 0; color: #333; }
+    #sopa {
+      display: grid;
+      grid-template-columns: repeat(10, 35px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .letra {
+      width: 35px;
+      height: 35px;
+      background-color: #fefefe;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      color: #333;
+    }
+    .seleccionada { background-color: #f39c12; color: white; }
+    #palabras { margin-top: 20px; }
+    #palabras span {
+      display: inline-block;
+      margin: 5px 10px;
+      background: #ffe0b2;
+      padding: 5px 10px;
+      border-radius: 10px;
+    }
+    #volver {
+      margin-top: 30px;
+      padding: 10px 20px;
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    #ganaste { font-size: 1.2em; color: green; margin-top: 20px; }
+    #infoBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #d35400;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    #infoModal {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      width: 260px;
+      display: none;
+      text-align: left;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧩 Sopa de Letras</h1>
+  <div id="nivel">Nivel 1</div>
+  <div id="timer">Tiempo restante: 2:00</div>
+  <div id="sopa"></div>
+  <div id="palabras">
+    <strong>Palabras por encontrar:</strong>
+    <div id="listaPalabras"></div>
+  </div>
+  <div id="ganaste"></div>
+  <button id="volver" onclick="location.href='../menujuegos.html'">← Volver al menú de juegos</button>
+
+  <button id="infoBtn" onclick="toggleInfo()">?</button>
+  <div id="infoModal">
+    <strong>Reglas:</strong>
+    <ul>
+      <li>Tienes 2 minutos por nivel.</li>
+      <li>Encuentra todas las palabras antes de que se acabe el tiempo.</li>
+      <li>Si se termina el tiempo, se registrará tu puntuación actual.</li>
+      <li>Cada palabra encontrada da 10 puntos.</li>
+      <li>Las palabras pueden estar en horizontal y están ocultas en la sopa.</li>
+    </ul>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const letras = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+    const niveles = [
+      ["TACO", "QUESO", "SOPA", "ARROZ", "AGUA"],
+      ["PERRO", "GATO", "PAN", "LECHE", "FRUTA"],
+      ["COCINA", "VASO", "CUCHARA", "PLATO", "TENEDOR"],
+      ["PASTEL", "CARNE", "SAL", "AZUCAR", "FIDEO"],
+      ["POLLO", "CAFE", "HELADO", "QUESILLO", "HUEVO"],
+      ["JUGO", "LIMON", "PESCADO", "CHILE", "TOMATE"],
+      ["ALMUERZO", "CENA", "MERIENDA", "DESAYUNO", "BEBIDA"],
+      ["COCINAR", "SERVIR", "HERVIR", "ASAR", "CORTAR"],
+      ["RECETA", "SARTEN", "HORNO", "BATIDORA", "CUCHILLO"],
+      ["COMER", "BEBER", "SABOR", "CONDIMENTO", "ACEITE"],
+      ["CEBOLLA", "ARVEJA", "PASTA", "MAIZ", "HARINA"],
+      ["GUISO", "CALDO", "QUESADILLA", "HAMBURGUESA", "PIZZA"],
+      ["EMPANADA", "TORTILLA", "AGUACATE", "SANDWICH", "TOCINO"],
+      ["YOGUR", "ENSALADA", "NARANJA", "BANANA", "FRESA"],
+      ["MANGO", "PIÑA", "MELON", "DURAZNO", "CEREZA"],
+      ["AGUJA", "CUCHARON", "SARTEN", "ESPATULA", "PINZA"],
+      ["FOGON", "HUMO", "GRASA", "RECIPIENTE", "TAPA"],
+      ["CENA", "COMIDA", "BEBIDA", "DESAYUNO", "MERIENDA"],
+      ["VINAGRE", "MOSTAZA", "MAYONESA", "SALSA", "KETCHUP"],
+      ["TRIGO", "ARROZ", "LENTEJA", "SOYA", "CHOCLO"]
+    ];
+
+    let nivelActual = 0;
+    let puntosTotales = 0;
+    let palabras = [];
+    let encontradas = new Set();
+    let timer;
+    let tiempoRestante = 120;
+
+    function actualizarTemporizador() {
+      const min = Math.floor(tiempoRestante / 60);
+      const seg = tiempoRestante % 60;
+      document.getElementById("timer").textContent = `Tiempo restante: ${min}:${seg < 10 ? '0' : ''}${seg}`;
+      if (tiempoRestante <= 0) {
+        perderNivel();
+      } else {
+        tiempoRestante--;
+        timer = setTimeout(actualizarTemporizador, 1000);
+      }
+    }
+
+    function perderNivel() {
+      clearTimeout(timer);
+      const nombre = prompt("Se acabó el tiempo. Escribe tu nombre para registrar tu puntaje:");
+      if (nombre) {
+        const fecha = new Date().toLocaleString("es-MX");
+        db.ref("ranking/juego7").push({ nombre, puntuacion: puntosTotales, fecha });
+        document.getElementById("ganaste").textContent = `Juego terminado. Puntos: ${puntosTotales}`;
+        sopa.innerHTML = "";
+      }
+    }
+
+    function generarSopa() {
+      clearTimeout(timer);
+      sopa.innerHTML = "";
+      encontradas.clear();
+      seleccion = "";
+      palabras = niveles[nivelActual];
+      document.getElementById("nivel").textContent = `Nivel ${nivelActual + 1}`;
+      tiempoRestante = 120;
+      actualizarTemporizador();
+
+      const grid = Array(100).fill(null);
+      palabras.forEach(palabra => {
+        let colocado = false;
+        while (!colocado) {
+          const fila = Math.floor(Math.random() * 10);
+          const col = Math.floor(Math.random() * (10 - palabra.length));
+          let libre = true;
+          for (let i = 0; i < palabra.length; i++) {
+            if (grid[fila * 10 + col + i] !== null) {
+              libre = false;
+              break;
+            }
+          }
+          if (libre) {
+            for (let i = 0; i < palabra.length; i++) {
+              grid[fila * 10 + col + i] = palabra[i];
+            }
+            colocado = true;
+          }
+        }
+      });
+
+      for (let i = 0; i < 100; i++) {
+        const div = document.createElement("div");
+        div.className = "letra";
+        div.textContent = grid[i] || letras[Math.floor(Math.random() * letras.length)];
+        sopa.appendChild(div);
+      }
+
+      listaPalabras.innerHTML = palabras.map(p => `<span id="p_${p}">${p}</span>`).join("");
+    }
+
+    let seleccion = "";
+    document.getElementById("sopa").addEventListener("click", (e) => {
+      if (!e.target.classList.contains("letra")) return;
+      e.target.classList.toggle("seleccionada");
+      seleccion += e.target.textContent;
+
+      if (palabras.includes(seleccion)) {
+        encontradas.add(seleccion);
+        document.getElementById("p_" + seleccion).style.textDecoration = "line-through";
+        seleccion = "";
+        sopa.querySelectorAll(".seleccionada").forEach(l => l.classList.remove("seleccionada"));
+
+        if (encontradas.size === palabras.length) {
+          puntosTotales += palabras.length * 10;
+          clearTimeout(timer);
+          if (nivelActual < niveles.length - 1) {
+            nivelActual++;
+            setTimeout(() => {
+              document.getElementById("ganaste").textContent = "Nivel completado. Cargando siguiente...";
+              generarSopa();
+            }, 1500);
+          } else {
+            document.getElementById("ganaste").innerHTML = `🎉 Juego terminado. Total: ${puntosTotales} puntos.`;
+            const nombre = prompt("Escribe tu nombre:");
+            if (nombre) {
+              const fecha = new Date().toLocaleString("es-MX");
+              db.ref("ranking/juego7").push({ nombre, puntuacion: puntosTotales, fecha });
+            }
+          }
+        }
+      } else {
+        if (seleccion.length > 10) {
+          seleccion = "";
+          sopa.querySelectorAll(".seleccionada").forEach(l => l.classList.remove("seleccionada"));
+        }
+      }
+    });
+
+    function toggleInfo() {
+      const modal = document.getElementById("infoModal");
+      modal.style.display = modal.style.display === "block" ? "none" : "block";
+    }
+
+    generarSopa();
+  </script>
+</body>
+</html>
