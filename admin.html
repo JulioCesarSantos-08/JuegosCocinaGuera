@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel Admin</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f7f7f7;
+      color: #333;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      background-color: #c0392b;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #e74c3c;
+    }
+    .borrar-todo {
+      background-color: #000;
+    }
+    .borrar-todo:hover {
+      background-color: #444;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="login">
+    <h2>Acceso Admin</h2>
+    <input type="password" id="password" placeholder="Contraseña de acceso" />
+    <button onclick="verificarPassword()">Entrar</button>
+  </div>
+
+  <div class="container" id="adminPanel" style="display: none;">
+    <h2>Panel de Limpieza</h2>
+    <button onclick="borrarDatos('ranking/buscaminas')">🧨 Borrar Buscaminas</button>
+    <button onclick="borrarDatos('ranking/juego6')">🟡 Borrar Simon Dice</button>
+    <button onclick="borrarDatos('puntajes/arkanoid')">🧱 Borrar Arkanoid</button>
+    <button onclick="borrarDatos('puntajes/gato')">🐱 Borrar Gato</button>
+    <button onclick="borrarDatos('puntajes/rompecabezas')">🧩 Borrar Rompecabezas</button>
+    <button onclick="borrarDatos('puntajes/serpiente')">🐍 Borrar Serpiente</button>
+    <button onclick="borrarDatos('ranking/juego7')">🔤 Borrar Sopa de Letras</button>
+    <button class="borrar-todo" onclick="borrarTodo()">⚠️ Borrar TODO</button>
+  </div>
+
+  <script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0OWKnhz0jmGiiiGwotDpkEhEj_tCUvjs",
+      authDomain: "pedidospuestocomida.firebaseapp.com",
+      projectId: "pedidospuestocomida",
+      storageBucket: "pedidospuestocomida.appspot.com",
+      messagingSenderId: "251357525868",
+      appId: "1:251357525868:web:9cf755590e16fdff686549"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function verificarPassword() {
+      const input = document.getElementById('password').value;
+      if (input === 'costa2025') {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    }
+
+    function borrarDatos(ruta) {
+      if (confirm(`¿Seguro que deseas borrar los datos de: ${ruta}?`)) {
+        db.ref(ruta).remove()
+          .then(() => alert(`Datos de ${ruta} eliminados con éxito`))
+          .catch(err => alert(`Error al eliminar: ${err}`));
+      }
+    }
+
+    function borrarTodo() {
+      if (confirm("⚠️ Esto borrará todos los puntajes y rankings de los 7 juegos. ¿Estás absolutamente seguro?")) {
+        const rutas = [
+          "ranking/buscaminas",
+          "ranking/juego6",
+          "puntajes/arkanoid",
+          "puntajes/gato",
+          "puntajes/rompecabezas",
+          "puntajes/serpiente",
+          "puntajes/sopa"
+        ];
+
+        Promise.all(rutas.map(ruta => db.ref(ruta).remove()))
+          .then(() => alert("✅ Todos los datos fueron eliminados con éxito."))
+          .catch(err => alert("❌ Error al borrar: " + err));
+      }
+    }
+  </script>
+</body>
+</html>
